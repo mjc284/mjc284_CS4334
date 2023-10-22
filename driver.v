@@ -9,8 +9,8 @@ module driver(
 	output mclk
 	);
 	
-	reg [24:0] clk_buf;
-	alwyas @(posedge clk)
+	reg [9:0] clk_buf;
+	always @(posedge clk)
 		clk_buf <= clk_buf + 1;
 	
 	wire [23:0] output_left = data_L - 24'h800000;
@@ -20,11 +20,11 @@ module driver(
 	assign mclk = clk_buf[1];
 	assign sclk = !clk_buf[1];
 	
-	reg reg_dac_lrck;
+	reg reg_lrck;
 	reg [24:0] reg_output;
 	always @(posedge clk_buf[1]) begin
-		reg_dac_lrck <= dac_lrck;
-		case({dac_lrck, reg_dac_lrck})
+		reg_lrck <= lrck;
+		case({lrck, reg_lrck})
 			0: reg_output <= {reg_output[23:0], 1'b0};
 			1: reg_output <= {1'b0, output_left};
 			2: reg_output <= {1'b0, output_right};
@@ -32,4 +32,6 @@ module driver(
 		endcase
 	end
 		
-	assign sdata = reg_output[24];	
+	assign sdata = reg_output[24];
+	
+endmodule

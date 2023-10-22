@@ -7,20 +7,19 @@ module main(
 	output dac1_mclk
 	);
 	
-	
+	reg [24:0] clk_buf;
+	always @(posedge clk)
+		clk_buf <= clk_buf + 1;
 	
 
-	wire testing = clk_buf[1];
-	
-	
-	assign buzzer = 1;
-	
+	wire [23:0] dac1_data_L = clk_buf[24:1];
+	wire [23:0] dac1_data_R = clk_buf[24:1];
 
 	
 	driver Driver1_inst(
 	.clk(clk),
-	.data_L,
-	.data_R,
+	.data_L(dac1_data_L),
+	.data_R(dac1_data_R),
 	
 	.sdata(dac1_sdata),
 	.sclk(dac1_sclk),

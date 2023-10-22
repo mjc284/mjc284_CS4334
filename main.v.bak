@@ -1,0 +1,1537 @@
+module main(	
+	input clk,
+	
+	output dac_sdata,
+	output dac_sclk,
+	output dac_lrck,
+	output dac_mclk
+	);
+	
+	
+	assign probe = (!key[0]) ? 1'b1 : 1'bz;
+	assign debug_led[0] = 1;
+	/*
+	
+	reg [18:0] testcntcnt;
+
+	reg [99:0] tester =      100'b0010000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000;
+	reg [99:0] tester_mask = 100'b1111111111111111111111111111111111111111111111110000000000000000000000000000000000000000000000000000;
+
+	reg [5:0] testcnt;
+	reg testclk;
+	always @(posedge clk_in) begin
+		if(testcnt == 9) begin
+			testcnt <= 0;
+			testclk <= !testclk;
+		end
+		else
+			testcnt <= testcnt + 1;
+	end
+	
+	wire [2:0] test3 = 3'b000;
+	wire [2:0] test1 = 3'b011;
+	wire [2:0] test0 = 3'b001;
+	wire [2:0] testnow = (!tester_mask[99]) ? test3 : tester[99] ? test1 : test0;
+	reg [1:0] testcnt2 = 0;
+	always @(posedge testclk) begin
+		if(testcnt2 == 2) begin
+			tester <= {tester[98:0], tester[99]};
+			tester_mask <= {tester_mask[98:0], tester_mask[99]};
+			testcnt2 <= 0;
+		end
+		else
+			testcnt2 <= testcnt2 + 1;
+	end
+	
+	always @(posedge clk_in)
+		testcntcnt <= testcntcnt + 1;
+	
+	assign probe = testnow[testcnt2];
+	*/
+	
+	/*
+	input [173:0] safety,
+
+	output LED3
+	*/
+	/*
+	wire clk_in;
+	wire [2:0] key;
+	wire [7:0] dig;
+	wire [5:0] sel;
+	
+	wire [3:0] led;
+	
+	wire buzzer;
+	
+	wire uart_rx;
+	wire uart_tx;
+	
+	wire [7:0] io1;
+	wire [7:0] io2;
+	wire [7:0] io3;
+	wire [7:0] io4;
+	
+	wire p_cs;
+	wire p_clk;
+	wire p_dout;
+	wire p_din;
+	
+	wire [7:0] p_sel;
+	
+	wire pwm_sound;
+	
+	wire cap_touch_trigger;
+	*/
+	
+	reg [24:0] clk_buf;
+	always @(posedge clk_in)
+		clk_buf <= clk_buf + 1'b1;
+	wire clk_slow = clk_buf[9];
+	wire clk_slower = clk_buf[19];
+	
+	
+	//Mastercontrol memory
+	wire [8:0] mem_2ab_addr_a;
+	wire [8:0] mem_2ab_addr_b;
+	wire mem_2ab_addrstall_a;
+	wire mem_2ab_addrstall_b;
+	wire mem_2ab_clk_a;
+	wire mem_2ab_clk_b;
+	wire [7:0] mem_2ab_din_a;
+	wire [7:0] mem_2ab_din_b;
+	wire mem_2ab_enable_a;
+	wire mem_2ab_enable_b;
+	wire mem_2ab_wren_a;
+	wire mem_2ab_wren_b;
+	wire [7:0] mem_2ab_dout_a;
+	wire [7:0] mem_2ab_dout_b;
+	mem_2 Mem_2_inst(
+		.address_a({1'b0, mem_2ab_addr_a}),
+		.address_b({1'b1, mem_2ab_addr_b}),
+		.addressstall_a(mem_2ab_addrstall_a),
+		.addressstall_b(mem_2ab_addrstall_b),
+		.clock_a(mem_2ab_clk_a),
+		.clock_b(mem_2ab_clk_a),
+		.data_a(mem_2ab_din_a),
+		.data_b(mem_2ab_din_b),
+		.enable_a(mem_2ab_enable_a),
+		.enable_b(mem_2ab_enable_b),
+		.wren_a(mem_2ab_wren_a),
+		.wren_b(mem_2ab_wren_b),
+		.q_a(mem_2ab_dout_a),
+		.q_b(mem_2ab_dout_b)
+	);
+	
+	//Mastercontrol program
+	wire [8:0] prog_ca_addr;
+	wire prog_ca_clk;
+	wire [15:0] prog_ca_dout;
+	prog_c Prog_ca_inst(
+	.address(prog_ca_addr),
+	.addressstall_a(1'b0),
+	.clock(prog_ca_clk),
+	.data(16'b0),
+	.wren(1'b0),
+	.q(prog_ca_dout)
+	);
+	
+	//Mastercontrol processor
+	wire [7:0] dout_ca_bus1;
+	wire [7:0] dout_ca_bus2;
+	wire [7:0] dout_ca_bus3;
+	wire [7:0] dout_ca_bus4;
+	wire [7:0] dout_ca_bus5;
+	wire [7:0] dout_ca_bus6;
+	wire [7:0] dout_ca_bus7;
+	wire [7:0] dout_ca_bus8;
+	
+	wire [7:0] din_ca_bus1;
+	wire [7:0] din_ca_bus2;
+	wire [7:0] din_ca_bus3;
+	wire [7:0] din_ca_bus4;
+	wire [7:0] din_ca_bus5;
+	wire [7:0] din_ca_bus6;
+	wire [7:0] din_ca_bus7;
+	wire [7:0] din_ca_bus8;
+	
+	reg [23:0] color;
+	
+	assign din_ca_bus1 = {7'b0, p_din};
+	assign din_ca_bus2 = {2'b0, color[23], 5'b0};
+	assign din_ca_bus3 = 8'b0;
+	assign din_ca_bus4 = 8'b0;
+	assign din_ca_bus5 = 8'b0;
+	assign din_ca_bus6 = 8'b0;
+	assign din_ca_bus7 = 8'b0;
+	assign din_ca_bus8 = 8'b0;
+	
+	archae_processor Processor_ca_inst(
+	.clk(clk_in),
+	.cpu_num(3'b0),
+	
+	.prog_addr(prog_ca_addr),
+	.prog_clk(prog_ca_clk),
+	.prog_dout(prog_ca_dout),
+	
+	.mem_addr(mem_2ab_addr_a),
+	.mem_addrstall(mem_2ab_addrstall_a),
+	.mem_clk(mem_2ab_clk_a),
+	.mem_clk_en(mem_2ab_enable_a),
+	.mem_din(mem_2ab_din_a),
+	.mem_wren(mem_2ab_wren_a),
+	.mem_dout(mem_2ab_dout_a),
+	
+	.dout_bus1(dout_ca_bus1),
+	.dout_bus2(dout_ca_bus2),
+	.dout_bus3(dout_ca_bus3),
+	.dout_bus4(dout_ca_bus4),
+	.dout_bus5(dout_ca_bus5),
+	.dout_bus6(dout_ca_bus6),
+	.dout_bus7(dout_ca_bus7),
+	.dout_bus8(dout_ca_bus8),
+	
+	.din_bus1(din_ca_bus1),
+	.din_bus2(din_ca_bus2),
+	.din_bus3(din_ca_bus3),
+	.din_bus4(din_ca_bus4),
+	.din_bus5(din_ca_bus5),
+	.din_bus6(din_ca_bus6),
+	.din_bus7(din_ca_bus7),
+	.din_bus8(din_ca_bus8)
+	);
+	
+	assign p_cs = dout_ca_bus1[7];
+	assign p_clk = dout_ca_bus2[0];
+	assign p_dout = dout_ca_bus3[0];
+	
+	assign p_sel_p[0] = dout_ca_bus4[0] ? 1'b1 : 1'bz;
+	assign p_sel_p[1] = dout_ca_bus4[1] ? 1'b1 : 1'bz;
+	assign p_sel_p[2] = dout_ca_bus4[2] ? 1'b1 : 1'bz;
+	assign p_sel_p[3] = dout_ca_bus4[3] ? 1'b1 : 1'bz;
+	assign p_sel_p[4] = dout_ca_bus4[4] ? 1'b1 : 1'bz;
+	assign p_sel_p[5] = dout_ca_bus4[5] ? 1'b1 : 1'bz;
+	assign p_sel_p[6] = dout_ca_bus4[6] ? 1'b1 : 1'bz;
+	assign p_sel_p[7] = dout_ca_bus4[7] ? 1'b1 : 1'bz;
+	
+	assign p_sel_n[0] = dout_ca_bus4[0] ? 1'b0 : 1'bz;
+	assign p_sel_n[1] = dout_ca_bus4[1] ? 1'b0 : 1'bz;
+	assign p_sel_n[2] = dout_ca_bus4[2] ? 1'b0 : 1'bz;
+	assign p_sel_n[3] = dout_ca_bus4[3] ? 1'b0 : 1'bz;
+	assign p_sel_n[4] = dout_ca_bus4[4] ? 1'b0 : 1'bz;
+	assign p_sel_n[5] = dout_ca_bus4[5] ? 1'b0 : 1'bz;
+	assign p_sel_n[6] = dout_ca_bus4[6] ? 1'b0 : 1'bz;
+	assign p_sel_n[7] = dout_ca_bus4[7] ? 1'b0 : 1'bz;
+	
+	assign debug_led[1] = (dout_ca_bus4[0]&dout_ca_bus4[1]) | (dout_ca_bus4[1]&dout_ca_bus4[2]) | (dout_ca_bus4[2]&dout_ca_bus4[3]) | (dout_ca_bus4[3]&dout_ca_bus4[4]) | (dout_ca_bus4[4]&dout_ca_bus4[5]) | (dout_ca_bus4[5]&dout_ca_bus4[6]) | (dout_ca_bus4[6]&dout_ca_bus4[7]) | (dout_ca_bus4[7]&dout_ca_bus4[0]);
+	assign debug_led[2] = |dout_ca_bus4;
+	
+	wire [7:0] control_reg_data = dout_ca_bus5;
+	wire [7:0] control_reg_address = dout_ca_bus6;
+	wire control_reg_clk = dout_ca_bus7[0];
+	//assign probe = dout_ca_bus8[5];
+	
+	wire [7:0] debug1;
+	wire [7:0] debug2;
+	assign debug1 = mode1_reg;
+	assign debug2 = octave1_reg;
+	
+	//Oscillator parameters
+	reg [7:0] mode1_reg; 		//0
+	reg [7:0] octave1_reg; 		//1
+	reg [7:0] note1_reg;			//2
+	reg [7:0] fine1_reg;			//3
+	
+	reg [7:0] mode2_reg;			//4
+	reg [7:0] octave2_reg; 		//5
+	reg [7:0] note2_reg;			//6
+	reg [7:0] fine2_reg;			//7
+	
+	reg [7:0] mode3_reg;			//8
+	reg [7:0] octave3_reg;		//9
+	reg [7:0] note3_reg;			//10
+	reg [7:0] fine3_reg;			//11
+	
+	reg [7:0] mode4_reg;			//12
+	reg [7:0] octave4_reg;		//13
+	reg [7:0] note4_reg;			//14
+	reg [7:0] fine4_reg; 		//15
+	
+	//Control parameters
+	reg [7:0] master_pan_reg; 	//16
+	reg [7:0] master_vol_reg; 	//17
+	reg [7:0] ctrl1_reg;			//18
+	reg [7:0] ctrl2_reg;			//19
+	
+	//Mixer parameters
+	reg [7:0] osc1_vol_reg; 	//20
+	reg [7:0] osc2_vol_reg; 	//21
+	reg [7:0] osc3_vol_reg; 	//22
+	reg [7:0] osc4_vol_reg; 	//23
+	reg [7:0] noise_vol_reg; 	//24
+	
+	//Filter parameters
+	reg [7:0] lowpass_reg; 		//25
+	reg [7:0] lowpass_res_reg; //26
+	reg [7:0] hipass_reg; 		//27
+	
+	//LFO parameters
+	reg [7:0] lfo1_amount_reg; //32
+	reg [7:0] lfo1_mode_reg; 	//33
+	reg [7:0] lfo1_phase_reg; 	//34
+	reg [7:0] lfo1_step_reg; 	//35
+	reg [7:0] lfo1_dest_reg; 	//36
+		
+	
+	reg [7:0] lfo2_amount_reg; //40
+	reg [7:0] lfo2_mode_reg; 	//41
+	reg [7:0] lfo2_phase_reg; 	//42
+	reg [7:0] lfo2_step_reg; 	//43
+	reg [7:0] lfo2_dest_reg; 	//44
+	
+	
+	//Envelope parameters
+	reg [7:0] envelope1_A_reg; //48:
+	reg [7:0] envelope1_D_reg; //49:
+	reg [7:0] envelope1_S_reg; //50:
+	reg [7:0] envelope1_R_reg; //51:
+	reg [7:0] envelope1_dest_reg;	//52:
+	
+	reg [7:0] envelope2_A_reg; //56:
+	reg [7:0] envelope2_D_reg; //47:
+	reg [7:0] envelope2_S_reg; //48:
+	reg [7:0] envelope2_R_reg; //49:
+	reg [7:0] envelope2_dest_reg;	//60:
+	
+	always @(posedge control_reg_clk) begin
+		case (control_reg_address)
+			0:  mode1_reg 			<= control_reg_data;
+			1:  octave1_reg 		<= control_reg_data;
+			2:  note1_reg			<= control_reg_data;
+			3:  fine1_reg			<= control_reg_data;
+			4:  mode2_reg			<= control_reg_data;
+			5:  octave2_reg 		<= control_reg_data;
+			6:  note2_reg			<= control_reg_data;
+			7:  fine2_reg			<= control_reg_data;
+			8:  mode3_reg			<= control_reg_data;
+			9:  octave3_reg		<= control_reg_data;
+			10: note3_reg			<= control_reg_data;
+			11: fine3_reg			<= control_reg_data;
+			12: mode4_reg			<= control_reg_data;
+			13: octave4_reg		<= control_reg_data;
+			14: note4_reg			<= control_reg_data;
+			15: fine4_reg 			<= control_reg_data;
+			16: master_pan_reg 	<= control_reg_data;
+			17: master_vol_reg 	<= control_reg_data;
+			18: ctrl1_reg			<= control_reg_data;
+			19: ctrl2_reg			<= control_reg_data;
+			20: osc1_vol_reg 		<= control_reg_data;
+			21: osc2_vol_reg 		<= control_reg_data;
+			22: osc3_vol_reg 		<= control_reg_data;
+			23: osc4_vol_reg 		<= control_reg_data;
+			24: noise_vol_reg 	<= control_reg_data;
+			25: lowpass_reg 		<= control_reg_data;
+			26: lowpass_res_reg 	<= control_reg_data;
+			27: hipass_reg 		<= control_reg_data;
+			//28: 
+			//29: 
+			//30:  
+			//31: 
+			32: lfo1_amount_reg 	<= control_reg_data;
+			33: lfo1_mode_reg 	<= control_reg_data;
+			34: lfo1_phase_reg 	<= control_reg_data;
+			35: lfo1_step_reg 	<= control_reg_data;
+			36: lfo1_dest_reg 	<= control_reg_data;
+			//37: 
+			//38: 
+			//39: 
+			40: lfo2_amount_reg 	<= control_reg_data;
+			41: lfo2_mode_reg 	<= control_reg_data;
+			42: lfo2_phase_reg 	<= control_reg_data;
+			43: lfo2_step_reg 	<= control_reg_data;
+			44: lfo2_dest_reg 	<= control_reg_data;
+			//45: 
+			//46: 
+			//47: 
+			48: envelope1_A_reg 	<= control_reg_data;
+			49: envelope1_D_reg 	<= control_reg_data;
+			50: envelope1_S_reg 	<= control_reg_data; 
+			51: envelope1_R_reg 	<= control_reg_data;
+			52: envelope1_dest_reg<= control_reg_data;
+			//53: 
+			//54: 
+			//55: 
+			56: envelope2_A_reg 	<= control_reg_data;
+			57: envelope2_D_reg 	<= control_reg_data;
+			58: envelope2_S_reg 	<= control_reg_data;
+			59: envelope2_R_reg 	<= control_reg_data;
+			default: envelope2_dest_reg<= control_reg_data; 
+			//61: 
+			//62: 
+			//63: 
+		endcase
+	end
+	
+	
+	wire [7:0] raw_brightness = 8'b00100000;
+	
+	reg [7:0] reg_brightness = 0;
+	always @(posedge clk_buf[20]) begin
+		if(reg_brightness < raw_brightness)
+			reg_brightness <= reg_brightness + 1;
+		else if(reg_brightness > raw_brightness)
+			reg_brightness <= reg_brightness - 1;
+	end
+	
+	wire [23:0] raw_color = {1'b0, reg_brightness[7:1], 8'b0, reg_brightness};
+	always @(posedge dout_ca_bus8[6]) begin
+		if(dout_ca_bus8[7])
+			color <= raw_color;
+		else
+			color <= {color[22:0], 1'b0};
+	end
+	
+	
+	
+	
+	
+	
+	wire keymode = !key[0];
+
+	//Keyboard memory
+	wire [8:0] mem_0ab_addr_a;
+	wire [8:0] mem_0ab_addr_b;
+	wire mem_0ab_addrstall_a;
+	wire mem_0ab_addrstall_b;
+	wire mem_0ab_clk_a;
+	wire mem_0ab_clk_b;
+	wire [7:0] mem_0ab_din_a;
+	wire [7:0] mem_0ab_din_b;
+	wire mem_0ab_enable_a;
+	wire mem_0ab_enable_b;
+	wire mem_0ab_wren_a;
+	wire mem_0ab_wren_b;
+	wire [7:0] mem_0ab_dout_a;
+	wire [7:0] mem_0ab_dout_b;
+	mem_0 Mem_0_inst(
+		.address_a({1'b0, mem_0ab_addr_a}),
+		.address_b({1'b1, mem_0ab_addr_b}),
+		.addressstall_a(mem_0ab_addrstall_a),
+		.addressstall_b(mem_0ab_addrstall_b),
+		.clock_a(mem_0ab_clk_a),
+		.clock_b(mem_0ab_clk_a),
+		.data_a(mem_0ab_din_a),
+		.data_b(mem_0ab_din_b),
+		.enable_a(mem_0ab_enable_a),
+		.enable_b(mem_0ab_enable_b),
+		.wren_a(mem_0ab_wren_a),
+		.wren_b(mem_0ab_wren_b),
+		.q_a(mem_0ab_dout_a),
+		.q_b(mem_0ab_dout_b)
+	);
+	
+	//Keyboard 1 program
+	wire [8:0] prog_0a_addr;
+	wire prog_0a_clk;
+	wire [15:0] prog_0a_dout;
+	prog_0 Prog_0a_inst(
+	.address(prog_0a_addr),
+	.addressstall_a(1'b0),
+	.clock(prog_0a_clk),
+	.data(16'b0),
+	.wren(1'b0),
+	.q(prog_0a_dout)
+	);
+	
+	//Keyboard 1 processor
+	wire [7:0] dout_0a_bus1;
+	wire [7:0] dout_0a_bus2;
+	wire [7:0] dout_0a_bus3;
+	wire [7:0] dout_0a_bus4;
+	wire [7:0] dout_0a_bus5;
+	wire [7:0] dout_0a_bus6;
+	wire [7:0] dout_0a_bus7;
+	wire [7:0] dout_0a_bus8;
+	
+	wire [7:0] din_0a_bus1;
+	wire [7:0] din_0a_bus2;
+	wire [7:0] din_0a_bus3;
+	wire [7:0] din_0a_bus4;
+	wire [7:0] din_0a_bus5;
+	wire [7:0] din_0a_bus6;
+	wire [7:0] din_0a_bus7;
+	wire [7:0] din_0a_bus8;
+	
+	assign din_0a_bus1 = dout_0a_bus5[0] ? io1 : debug1;
+	assign din_0a_bus2 = io2;
+	assign din_0a_bus3 = io3;
+	assign din_0a_bus4 = {{2{dout_0a_bus3[0]}}, io4[5:0]};
+	assign din_0a_bus5 = {8{dout_0a_bus3[0]}};
+	assign din_0a_bus6 = {8{dout_0a_bus3[0]}};
+	assign din_0a_bus7 = {8{dout_0a_bus3[0]}};
+	assign din_0a_bus8 = {8{dout_0a_bus3[0]}};
+
+	assign cap_touch_trigger = dout_0a_bus3[0];
+	
+	archae_processor Processor_0a_inst(
+	.clk(clk_in),
+	.cpu_num(3'b0),
+	
+	.prog_addr(prog_0a_addr),
+	.prog_clk(prog_0a_clk),
+	.prog_dout(prog_0a_dout),
+	
+	.mem_addr(mem_0ab_addr_a),
+	.mem_addrstall(mem_0ab_addrstall_a),
+	.mem_clk(mem_0ab_clk_a),
+	.mem_clk_en(mem_0ab_enable_a),
+	.mem_din(mem_0ab_din_a),
+	.mem_wren(mem_0ab_wren_a),
+	.mem_dout(mem_0ab_dout_a),
+	
+	.dout_bus1(dout_0a_bus1),
+	.dout_bus2(dout_0a_bus2),
+	.dout_bus3(dout_0a_bus3),
+	.dout_bus4(dout_0a_bus4),
+	.dout_bus5(dout_0a_bus5),
+	.dout_bus6(dout_0a_bus6),
+	.dout_bus7(dout_0a_bus7),
+	.dout_bus8(dout_0a_bus8),
+	
+	.din_bus1(din_0a_bus1),
+	.din_bus2(din_0a_bus2),
+	.din_bus3(din_0a_bus3),
+	.din_bus4(din_0a_bus4),
+	.din_bus5(din_0a_bus5),
+	.din_bus6(din_0a_bus6),
+	.din_bus7(din_0a_bus7),
+	.din_bus8(din_0a_bus8)
+	);
+	
+	//Keyboard 2 program
+	wire [8:0] prog_0b_addr;
+	wire prog_0b_clk;
+	wire [15:0] prog_0b_dout;
+	prog_0 Prog_0b_inst(
+	.address(prog_0b_addr),
+	.addressstall_a(1'b0),
+	.clock(prog_0b_clk),
+	.data(16'b0),
+	.wren(1'b0),
+	.q(prog_0b_dout)
+	);
+	
+	//Keyboard 2 processor
+	wire [7:0] dout_0b_bus1;
+	wire [7:0] dout_0b_bus2;
+	wire [7:0] dout_0b_bus3;
+	wire [7:0] dout_0b_bus4;
+	wire [7:0] dout_0b_bus5;
+	wire [7:0] dout_0b_bus6;
+	wire [7:0] dout_0b_bus7;
+	wire [7:0] dout_0b_bus8;
+	
+	wire [7:0] din_0b_bus1;
+	wire [7:0] din_0b_bus2;
+	wire [7:0] din_0b_bus3;
+	wire [7:0] din_0b_bus4;
+	wire [7:0] din_0b_bus5;
+	wire [7:0] din_0b_bus6;
+	wire [7:0] din_0b_bus7;
+	wire [7:0] din_0b_bus8;
+	
+	assign din_0b_bus1 = {8{dout_0b_bus3[0]}};
+	assign din_0b_bus2 = {8{dout_0a_bus3[0]}};
+	assign din_0b_bus3 = {8{dout_0a_bus3[0]}};
+	assign din_0b_bus4 = {8{dout_0a_bus3[0]}};
+	assign din_0b_bus5 = {8{dout_0a_bus3[0]}};
+	assign din_0b_bus6 = {8{dout_0a_bus3[0]}};
+	assign din_0b_bus7 = {8{dout_0a_bus3[0]}};
+	assign din_0b_bus8 = {8{dout_0a_bus3[0]}};
+	
+	archae_processor Processor_0b_inst(
+	.clk(clk),
+	.cpu_num(3'd1),
+	
+	.prog_addr(prog_0b_addr),
+	.prog_clk(prog_0b_clk),
+	.prog_dout(prog_0b_dout),
+	
+	.mem_addr(mem_0ab_addr_b),
+	.mem_addrstall(mem_0ab_addrstall_b),
+	.mem_clk(mem_0ab_clk_b),
+	.mem_clk_en(mem_0ab_enable_b),
+	.mem_din(mem_0ab_din_b),
+	.mem_wren(mem_0ab_wren_b),
+	.mem_dout(mem_0ab_dout_b),
+	
+	.dout_bus1(dout_0b_bus1),
+	.dout_bus2(dout_0b_bus2),
+	.dout_bus3(dout_0b_bus3),
+	.dout_bus4(dout_0b_bus4),
+	.dout_bus5(dout_0b_bus5),
+	.dout_bus6(dout_0b_bus6),
+	.dout_bus7(dout_0b_bus7),
+	.dout_bus8(dout_0b_bus8),
+	
+	.din_bus1(din_0b_bus1),
+	.din_bus2(din_0b_bus2),
+	.din_bus3(din_0b_bus3),
+	.din_bus4(din_0b_bus4),
+	.din_bus5(din_0b_bus5),
+	.din_bus6(din_0b_bus6),
+	.din_bus7(din_0b_bus7),
+	.din_bus8(din_0b_bus8)
+	);
+	
+	
+	
+	
+	
+	//UART memory
+	wire [8:0] mem_zab_addr_a;
+	wire [8:0] mem_zab_addr_b;
+	wire mem_zab_addrstall_a;
+	wire mem_zab_addrstall_b;
+	wire mem_zab_clk_a;
+	wire mem_zab_clk_b;
+	wire [7:0] mem_zab_din_a;
+	wire [7:0] mem_zab_din_b;
+	wire mem_zab_enable_a;
+	wire mem_zab_enable_b;
+	wire mem_zab_wren_a;
+	wire mem_zab_wren_b;
+	wire [7:0] mem_zab_dout_a;
+	wire [7:0] mem_zab_dout_b;
+	mem_z Mem_z_inst(
+		.address_a({1'b0, mem_zab_addr_a}),
+		.address_b({1'b1, mem_zab_addr_b}),
+		.addressstall_a(mem_zab_addrstall_a),
+		.addressstall_b(mem_zab_addrstall_b),
+		.clock_a(mem_zab_clk_a),
+		.clock_b(mem_zab_clk_a),
+		.data_a(mem_zab_din_a),
+		.data_b(mem_zab_din_b),
+		.enable_a(mem_zab_enable_a),
+		.enable_b(mem_zab_enable_b),
+		.wren_a(mem_zab_wren_a),
+		.wren_b(mem_zab_wren_b),
+		.q_a(mem_zab_dout_a),
+		.q_b(mem_zab_dout_b)
+	);
+	
+	//UART program
+	wire [8:0] prog_za_addr;
+	wire prog_za_clk;
+	wire [15:0] prog_za_dout;
+	prog_z Prog_za_inst(
+	.address(prog_za_addr),
+	.addressstall_a(1'b0),
+	.clock(prog_za_clk),
+	.data(16'b0),
+	.wren(1'b0),
+	.q(prog_za_dout)
+	);
+	
+	//UART processor
+	wire [7:0] dout_za_bus1;
+	wire [7:0] dout_za_bus2;
+	wire [7:0] dout_za_bus3;
+	wire [7:0] dout_za_bus4;
+	wire [7:0] dout_za_bus5;
+	wire [7:0] dout_za_bus6;
+	wire [7:0] dout_za_bus7;
+	wire [7:0] dout_za_bus8;
+	
+	wire [7:0] din_za_bus1;
+	wire [7:0] din_za_bus2;
+	wire [7:0] din_za_bus3;
+	wire [7:0] din_za_bus4;
+	wire [7:0] din_za_bus5;
+	wire [7:0] din_za_bus6;
+	wire [7:0] din_za_bus7;
+	wire [7:0] din_za_bus8;
+	
+	assign din_za_bus1 = dout_0a_bus1;
+	assign din_za_bus2 = 8'd0;
+	assign din_za_bus3 = keymode;
+	assign din_za_bus4 = 8'd0;
+	assign din_za_bus5 = 8'h00;
+	assign din_za_bus6 = 8'h00;
+	assign din_za_bus7 = 8'h00;
+	assign din_za_bus8 = 8'h00;
+	
+	archae_processor Processor_za_inst(
+	.clk(clk_in),//&!key[2]),
+	.cpu_num(3'b0),
+	
+	.prog_addr(prog_za_addr),
+	.prog_clk(prog_za_clk),
+	.prog_dout(prog_za_dout),
+	
+	.mem_addr(mem_zab_addr_a),
+	.mem_addrstall(mem_zab_addrstall_a),
+	.mem_clk(mem_zab_clk_a),
+	.mem_clk_en(mem_zab_enable_a),
+	.mem_din(mem_zab_din_a),
+	.mem_wren(mem_zab_wren_a),
+	.mem_dout(mem_zab_dout_a),
+	
+	.dout_bus1(dout_za_bus1),
+	.dout_bus2(dout_za_bus2),
+	.dout_bus3(dout_za_bus3),
+	.dout_bus4(dout_za_bus4),
+	.dout_bus5(dout_za_bus5),
+	.dout_bus6(dout_za_bus6),
+	.dout_bus7(dout_za_bus7),
+	.dout_bus8(dout_za_bus8),
+	
+	.din_bus1(din_za_bus1),
+	.din_bus2(din_za_bus2),
+	.din_bus3(din_za_bus3),
+	.din_bus4(din_za_bus4),
+	.din_bus5(din_za_bus5),
+	.din_bus6(din_za_bus6),
+	.din_bus7(din_za_bus7),
+	.din_bus8(din_za_bus8)
+	);
+	
+	assign uart_tx = !dout_za_bus1[0];
+	
+	
+	wire [7:0] LFO1_out;
+	wire [7:0] LFO2_out;
+	wire [7:0] envelope1_out;
+	wire [7:0] envelope2_out;
+	
+	wire [7:0] keynum_raw = |(dout_0a_bus1) ? {dout_0a_bus1[7:2], keymode & dout_0a_bus1[1], keymode & dout_0a_bus1[0]} :
+							      |(dout_0b_bus1) ? {dout_0b_bus1[7:2], keymode & dout_0b_bus1[1], keymode & dout_0b_bus1[0]} + 48 : 0;
+	wire keypressed = (|(dout_0a_bus1)) | (|(dout_0b_bus1));
+	
+	reg [7:0] keynum;
+	reg keyon;
+	always @(posedge clk_in) begin
+		if(!(((|envelope1_out) | (|envelope2_out)) & !(|keynum_raw))) begin
+			keynum <= keynum_raw;
+			keyon <= keypressed;
+		end
+	end
+	
+	wire [7:0] LFO1_out_offset = LFO1_out + 8'h80;
+	
+	//wire [7:0] offset1 = keyon ? (offset1_reg - 8'h80) : 8'd0;
+	wire [4:0] note1 = 8'd0;
+	wire [4:0] note2 = 8'd4;
+	wire [4:0] note3 = 8'd7;
+	wire [4:0] note4 = 8'd11;
+
+	wire [3:0] fine1 = 8'd0;
+	wire [3:0] fine2 = 8'd0;
+	wire [3:0] fine3 = 8'd0;
+	wire [3:0] fine4 = 8'd0;
+	
+	wire [31:0] step_raw;
+	reg [31:0] step1;
+	reg [31:0] step2;
+	reg [31:0] step3;
+	reg [31:0] step4;
+	
+	wire [9:0] tmp_tone1_raw = (keynum<<2) + (note1<<4) + (fine1);
+	wire [9:0] tmp_tone2_raw = (keynum<<2) + (note2<<4) + (fine2);
+	wire [9:0] tmp_tone3_raw = (keynum<<2) + (note3<<4) + (fine3);
+	wire [9:0] tmp_tone4_raw = (keynum<<2) + (note4<<4) + (fine4);
+	
+	wire [9:0] tmp_tone1 = !keyon ? 192 : (tmp_tone1_raw > 383) ? tmp_tone1_raw - 383 : (tmp_tone1_raw > 191) ? tmp_tone1_raw - 191 : tmp_tone1_raw;
+	wire [9:0] tmp_tone2 = !keyon ? 192 : (tmp_tone2_raw > 383) ? tmp_tone2_raw - 383 : (tmp_tone2_raw > 191) ? tmp_tone2_raw - 191 : tmp_tone2_raw;
+	wire [9:0] tmp_tone3 = !keyon ? 192 : (tmp_tone3_raw > 383) ? tmp_tone3_raw - 383 : (tmp_tone3_raw > 191) ? tmp_tone3_raw - 191 : tmp_tone3_raw;
+	wire [9:0] tmp_tone4 = !keyon ? 192 : (tmp_tone4_raw > 383) ? tmp_tone4_raw - 383 : (tmp_tone4_raw > 191) ? tmp_tone4_raw - 191 : tmp_tone4_raw;
+	
+	reg [7:0] tone;
+	reg [1:0] osc_cnt = 2'b0;
+	
+	wire [2:0] octave1 = 3'd4 - (tmp_tone1_raw > 191) - (tmp_tone1_raw > 383);
+	wire [2:0] octave2 = 3'd4 - (tmp_tone2_raw > 191) - (tmp_tone2_raw > 383);
+	wire [2:0] octave3 = 3'd4 - (tmp_tone3_raw > 191) - (tmp_tone3_raw > 383);
+	wire [2:0] octave4 = 3'd4 - (tmp_tone4_raw > 191) - (tmp_tone4_raw > 383);
+
+	always @(posedge clk_in) begin
+		osc_cnt <= osc_cnt + 1;
+		case(osc_cnt)
+			2'd0: begin
+				tone <= tmp_tone1[7:0];
+				step3 <= step_raw >> octave3;
+				end
+			2'd1: begin
+				tone <= tmp_tone2[7:0];
+				step4 <= step_raw >> octave4;
+				end
+			2'd2: begin
+				tone <= tmp_tone3[7:0];
+				step1 <= step_raw >> octave1;
+				end
+			default: begin
+				tone <= tmp_tone4[7:0];
+				step2 <= step_raw >> octave2;
+				end
+		endcase
+	end
+
+	rom_osc Rom_osc_inst(
+	.address(tone),
+	.clock(clk_in),
+	.q(step_raw)
+	);
+	
+	wire [1:0] osc1_mode = 2'd3;
+	wire [31:0] osc1_saw;
+	wire [31:0] osc1_isaw;
+	wire [31:0] osc1_sqaure;
+	wire [31:0] osc1_triangle;
+	wire [31:0] osc1;
+	oscillator Oscillator1(
+	.clk(clk_in),
+	.step(step1),
+	.mode(osc1_mode),
+	.out(osc1)
+	);
+
+	wire [1:0] osc2_mode = 2'd3;
+	wire [31:0] osc2_saw;
+	wire [31:0] osc2_isaw;
+	wire [31:0] osc2_sqaure;
+	wire [31:0] osc2_triangle;
+	wire [31:0] osc2;
+	oscillator Oscillator2(
+	.clk(clk_in),
+	.step(step2),
+	.mode(osc2_mode),
+	.out(osc2)
+	);
+
+	wire [1:0] osc3_mode = 2'd3;
+	wire [31:0] osc3_saw;
+	wire [31:0] osc3_isaw;
+	wire [31:0] osc3_sqaure;
+	wire [31:0] osc3_triangle;
+	wire [31:0] osc3;
+	oscillator Oscillator3(
+	.clk(clk_in),
+	.step(step3),
+	.mode(osc3_mode),
+	.out(osc3)
+	);
+
+	wire [1:0] osc4_mode = 2'd3;
+	wire [31:0] osc4_saw;
+	wire [31:0] osc4_isaw;
+	wire [31:0] osc4_sqaure;
+	wire [31:0] osc4_triangle;
+	wire [31:0] osc4;
+	oscillator Oscillator4(
+	.clk(clk_in),
+	.step(step4),
+	.mode(osc4_mode),
+	.out(osc4)
+	);
+	
+	
+	
+	
+	//Mixer
+	/*
+	wire [7:0] vol_osc1 = 8'h70;
+	wire [7:0] vol_osc2 = 8'h00;
+	wire [7:0] vol_osc3 = 8'b0;
+	wire [7:0] vol_osc4 = 8'b0;
+	wire [7:0] vol_noise = 8'b0;
+	*/
+	
+	
+	wire [7:0] vol_osc1 = 8'h20;
+	wire [7:0] vol_osc2 = 8'h20;
+	wire [7:0] vol_osc3 = 8'h20;
+	wire [7:0] vol_osc4 = 8'h20;
+	wire [7:0] vol_noise = 8'h0;
+	/*
+	wire [39:0] mixed_osc1 = osc1 * vol_osc1;
+	wire [39:0] mixed_osc2 = osc2 * vol_osc2;
+	wire [39:0] mixed_osc3 = osc3 * vol_osc3;
+	wire [39:0] mixed_osc4 = osc4 * vol_osc4;
+	
+	wire [41:0] mixed_raw = mixed_osc1 + mixed_osc2 + mixed_osc3 + mixed_osc4;
+	wire [31:0] mixed = |(mixed_raw[41:40]) ? 32'hffff : mixed_raw[39:8];
+	*/
+	//Mixer program
+	wire [8:0] prog_1a_addr;
+	wire prog_1a_clk;
+	wire [15:0] prog_1a_dout;
+	prog_1 Prog_1a_inst(
+	.address(prog_1a_addr),
+	.addressstall_a(1'b0),
+	.clock(prog_1a_clk),
+	.data(16'b0),
+	.wren(1'b0),
+	.q(prog_1a_dout)
+	);
+	
+	//Mixer processor
+	wire [7:0] dout_1a_bus1;
+	wire [7:0] dout_1a_bus2;
+	wire [7:0] dout_1a_bus3;
+	wire [7:0] dout_1a_bus4;
+	wire [7:0] dout_1a_bus5;
+	wire [7:0] dout_1a_bus6;
+	wire [7:0] dout_1a_bus7;
+	wire [7:0] dout_1a_bus8;
+	
+	wire [7:0] din_1a_bus1;
+	wire [7:0] din_1a_bus2;
+	wire [7:0] din_1a_bus3;
+	wire [7:0] din_1a_bus4;
+	wire [7:0] din_1a_bus5;
+	wire [7:0] din_1a_bus6;
+	wire [7:0] din_1a_bus7;
+	wire [7:0] din_1a_bus8;
+	
+	reg [31:0] dout_1a_op1;
+	always @(posedge dout_1a_bus5[3])
+		dout_1a_op1 <= {dout_1a_bus4, dout_1a_bus3, dout_1a_bus2, dout_1a_bus1};
+		
+	reg [39:0] dout_1a_mult;
+	wire [39:0] dout_1a_mult_tmp = dout_1a_op1 * dout_1a_bus1;
+	always @(posedge dout_1a_bus5[2])
+		dout_1a_mult <= dout_1a_op1 * dout_1a_bus1;
+		
+	reg [32:0] dout_1a_add;
+	wire [32:0] dout_1a_add_tmp = dout_1a_op1 + {dout_1a_bus4, dout_1a_bus3, dout_1a_bus2, dout_1a_bus1};
+	always @(posedge dout_1a_bus5[1])
+		dout_1a_add <= dout_1a_op1 + {dout_1a_bus4, dout_1a_bus3, dout_1a_bus2, dout_1a_bus1};
+		
+	reg [31:0] dout_1a_out;
+	always @(posedge dout_1a_bus5[0])
+		dout_1a_out <= {dout_1a_bus4, dout_1a_bus3, dout_1a_bus2, dout_1a_bus1};
+	
+	assign din_1a_bus1 = (!dout_1a_bus6[2]&!dout_1a_bus6[1]&!dout_1a_bus6[0]) ? osc1[ 7: 0] :
+								(!dout_1a_bus6[2]&!dout_1a_bus6[1]& dout_1a_bus6[0]) ? osc1[15: 8] :
+								(!dout_1a_bus6[2]& dout_1a_bus6[1]&!dout_1a_bus6[0]) ? osc1[23:16] :
+								(!dout_1a_bus6[2]& dout_1a_bus6[1]& dout_1a_bus6[0]) ? osc1[31:24] :
+								( dout_1a_bus6[2]&!dout_1a_bus6[1]&!dout_1a_bus6[0]) ? dout_1a_mult[15:8] :
+								( dout_1a_bus6[2]&!dout_1a_bus6[1]& dout_1a_bus6[0]) ? dout_1a_add[7:0]  : {7'd0, dout_1a_add[32]};
+	assign din_1a_bus2 = (!dout_1a_bus6[2]&!dout_1a_bus6[1]&!dout_1a_bus6[0]) ? osc2[ 7: 0] :
+								(!dout_1a_bus6[2]&!dout_1a_bus6[1]& dout_1a_bus6[0]) ? osc2[15: 8] :
+								(!dout_1a_bus6[2]& dout_1a_bus6[1]&!dout_1a_bus6[0]) ? osc2[23:16] :
+								(!dout_1a_bus6[2]& dout_1a_bus6[1]& dout_1a_bus6[0]) ? osc2[31:24] :
+								( dout_1a_bus6[2]&!dout_1a_bus6[1]&!dout_1a_bus6[0]) ? dout_1a_mult[23:16] : dout_1a_add[15:8];
+	assign din_1a_bus3 = (!dout_1a_bus6[2]&!dout_1a_bus6[1]&!dout_1a_bus6[0]) ? osc3[ 7: 0] :
+								(!dout_1a_bus6[2]&!dout_1a_bus6[1]& dout_1a_bus6[0]) ? osc3[15: 8] :
+								(!dout_1a_bus6[2]& dout_1a_bus6[1]&!dout_1a_bus6[0]) ? osc3[23:16] :
+								(!dout_1a_bus6[2]& dout_1a_bus6[1]& dout_1a_bus6[0]) ? osc3[31:24] :
+								( dout_1a_bus6[2]&!dout_1a_bus6[1]&!dout_1a_bus6[0]) ? dout_1a_mult[31:24] : dout_1a_add[23:16];
+	assign din_1a_bus4 = (!dout_1a_bus6[2]&!dout_1a_bus6[1]&!dout_1a_bus6[0]) ? osc4[ 7: 0] :
+								(!dout_1a_bus6[2]&!dout_1a_bus6[1]& dout_1a_bus6[0]) ? osc4[15: 8] :
+								(!dout_1a_bus6[2]& dout_1a_bus6[1]&!dout_1a_bus6[0]) ? osc4[23:16] :
+								(!dout_1a_bus6[2]& dout_1a_bus6[1]& dout_1a_bus6[0]) ? osc4[31:24] :
+								( dout_1a_bus6[2]&!dout_1a_bus6[1]&!dout_1a_bus6[0]) ? dout_1a_mult[39:32] : dout_1a_add[31:24];
+	assign din_1a_bus5 = dout_1a_bus6[0] ? vol_noise : vol_osc1;
+	assign din_1a_bus6 = dout_1a_bus6[0] ? keypressed : vol_osc2;
+	assign din_1a_bus7 = vol_osc3;
+	assign din_1a_bus8 = vol_osc4;
+	
+	archae_processor Processor_1a_inst(
+	.clk(clk_in),
+	.cpu_num(3'd2),
+	
+	.prog_addr(prog_1a_addr),
+	.prog_clk(prog_1a_clk),
+	.prog_dout(prog_1a_dout),
+	
+	.mem_addr(mem_zab_addr_b),
+	.mem_addrstall(mem_zab_addrstall_b),
+	.mem_clk(mem_zab_clk_b),
+	.mem_clk_en(mem_zab_enable_b),
+	.mem_din(mem_zab_din_b),
+	.mem_wren(mem_zab_wren_b),
+	.mem_dout(mem_zab_dout_b),
+	
+	.dout_bus1(dout_1a_bus1),
+	.dout_bus2(dout_1a_bus2),
+	.dout_bus3(dout_1a_bus3),
+	.dout_bus4(dout_1a_bus4),
+	.dout_bus5(dout_1a_bus5),
+	.dout_bus6(dout_1a_bus6),
+	.dout_bus7(dout_1a_bus7),
+	.dout_bus8(dout_1a_bus8),
+	
+	.din_bus1(din_1a_bus1),
+	.din_bus2(din_1a_bus2),
+	.din_bus3(din_1a_bus3),
+	.din_bus4(din_1a_bus4),
+	.din_bus5(din_1a_bus5),
+	.din_bus6(din_1a_bus6),
+	.din_bus7(din_1a_bus7),
+	.din_bus8(din_1a_bus8)
+	);
+	
+	wire [31:0] mixed = dout_1a_out;
+	wire clk_sync = dout_1a_bus8;
+	
+	
+	
+	
+	//Low pass + High pass filter
+	
+	//Lowpass Filter memory
+	wire [8:0] mem_1ab_addr_a;
+	wire [8:0] mem_1ab_addr_b;
+	wire mem_1ab_addrstall_a;
+	wire mem_1ab_addrstall_b;
+	wire mem_1ab_clk_a;
+	wire mem_1ab_clk_b;
+	wire [7:0] mem_1ab_din_a;
+	wire [7:0] mem_1ab_din_b;
+	wire mem_1ab_enable_a;
+	wire mem_1ab_enable_b;
+	wire mem_1ab_wren_a;
+	wire mem_1ab_wren_b;
+	wire [7:0] mem_1ab_dout_a;
+	wire [7:0] mem_1ab_dout_b;
+	mem_1 Mem_1_inst(
+		.address_a({1'b0, mem_1ab_addr_a}),
+		.address_b({1'b1, mem_1ab_addr_b}),
+		.addressstall_a(mem_1ab_addrstall_a),
+		.addressstall_b(mem_1ab_addrstall_b),
+		.clock_a(mem_1ab_clk_a),
+		.clock_b(mem_1ab_clk_a),
+		.data_a(mem_1ab_din_a),
+		.data_b(mem_1ab_din_b),
+		.enable_a(mem_1ab_enable_a),
+		.enable_b(mem_1ab_enable_b),
+		.wren_a(mem_1ab_wren_a),
+		.wren_b(mem_1ab_wren_b),
+		.q_a(mem_1ab_dout_a),
+		.q_b(mem_1ab_dout_b)
+	);
+	
+	//wire [7:0] lowpass_cutoff = offset1_reg;
+	wire [7:0] lowpass_cutoff = 8'hff;//LFO1_out;
+		
+	//Low-pass program
+	wire [8:0] prog_2a_addr;
+	wire prog_2a_clk;
+	wire [15:0] prog_2a_dout;
+	prog_2 Prog_2a_inst(
+	.address(prog_2a_addr),
+	.addressstall_a(1'b0),
+	.clock(prog_2a_clk),
+	.data(16'b0),
+	.wren(1'b0),
+	.q(prog_2a_dout)
+	);
+	
+	//Low-pass processor
+	wire [7:0] dout_2a_bus1;
+	wire [7:0] dout_2a_bus2;
+	wire [7:0] dout_2a_bus3;
+	wire [7:0] dout_2a_bus4;
+	wire [7:0] dout_2a_bus5;
+	wire [7:0] dout_2a_bus6;
+	wire [7:0] dout_2a_bus7;
+	wire [7:0] dout_2a_bus8;
+	
+	wire [7:0] din_2a_bus1;
+	wire [7:0] din_2a_bus2;
+	wire [7:0] din_2a_bus3;
+	wire [7:0] din_2a_bus4;
+	wire [7:0] din_2a_bus5;
+	wire [7:0] din_2a_bus6;
+	wire [7:0] din_2a_bus7;
+	wire [7:0] din_2a_bus8;
+	
+	wire [31:0] dout_2a = {dout_2a_bus4, dout_2a_bus3, dout_2a_bus2, dout_2a_bus1};
+	
+	reg [7:0] dout_2a_op1;
+	always @(posedge dout_2a_bus5[3])
+		dout_2a_op1 <= dout_2a_bus1;
+		
+	reg [31:0] dout_2a_op2;
+	always @(posedge dout_2a_bus5[2])
+		dout_2a_op2 <= dout_2a;
+		
+	wire [32:0] dout_2a_combo_tmp_0 = dout_2a_op2 - dout_2a;
+	wire [39:0] dout_2a_combo_tmp_1 = {{7{dout_2a_combo_tmp_0[32]}}, dout_2a_combo_tmp_0};
+		
+	wire [39:0] dout_2a_combo_tmp = dout_2a_op1 * dout_2a_combo_tmp_1;
+	
+	reg [31:0] dout_2a_combo;
+	always @(posedge dout_2a_bus5[1])
+		dout_2a_combo <= dout_2a_combo_tmp[39:8] + dout_2a;
+
+		
+	reg [31:0] dout_2a_out;
+	always @(posedge dout_2a_bus5[0])
+		dout_2a_out <= dout_2a;
+	
+	assign din_2a_bus1 = (!dout_2a_bus6[0]) ? mixed[7:0] : dout_2a_combo[7:0];
+	assign din_2a_bus2 = (!dout_2a_bus6[0]) ? mixed[15:8] : dout_2a_combo[15:8];
+	assign din_2a_bus3 = (!dout_2a_bus6[0]) ? mixed[23:16] : dout_2a_combo[23:16];
+	assign din_2a_bus4 = (!dout_2a_bus6[0]) ? mixed[31:24] : dout_2a_combo[31:24];
+	assign din_2a_bus5 = lowpass_cutoff;
+	assign din_2a_bus6 = lowpass_cutoff;
+	assign din_2a_bus7 = 8'b0;
+	assign din_2a_bus8 = 8'b0;
+	
+	archae_processor Processor_2a_inst(
+	.clk(clk_in),//&!key[2]),
+	.cpu_num(3'd2),
+	
+	.prog_addr(prog_2a_addr),
+	.prog_clk(prog_2a_clk),
+	.prog_dout(prog_2a_dout),
+	
+	.mem_addr(mem_1ab_addr_a),
+	.mem_addrstall(mem_1ab_addrstall_a),
+	.mem_clk(mem_1ab_clk_a),
+	.mem_clk_en(mem_1ab_enable_a),
+	.mem_din(mem_1ab_din_a),
+	.mem_wren(mem_1ab_wren_a),
+	.mem_dout(mem_1ab_dout_a),
+	
+	.dout_bus1(dout_2a_bus1),
+	.dout_bus2(dout_2a_bus2),
+	.dout_bus3(dout_2a_bus3),
+	.dout_bus4(dout_2a_bus4),
+	.dout_bus5(dout_2a_bus5),
+	.dout_bus6(dout_2a_bus6),
+	.dout_bus7(dout_2a_bus7),
+	.dout_bus8(dout_2a_bus8),
+	
+	.din_bus1(din_2a_bus1),
+	.din_bus2(din_2a_bus2),
+	.din_bus3(din_2a_bus3),
+	.din_bus4(din_2a_bus4),
+	.din_bus5(din_2a_bus5),
+	.din_bus6(din_2a_bus6),
+	.din_bus7(din_2a_bus7),
+	.din_bus8(din_2a_bus8)
+	);
+	
+	wire [31:0] low_passed = dout_2a_out;
+	
+	
+	
+	
+	wire [7:0] highpass_cutoff = 8'hff;
+	
+	//High-pass program
+	wire [8:0] prog_3a_addr;
+	wire prog_3a_clk;
+	wire [15:0] prog_3a_dout;
+	prog_3 Prog_3a_inst(
+	.address(prog_3a_addr),
+	.addressstall_a(1'b0),
+	.clock(prog_3a_clk),
+	.data(16'b0),
+	.wren(1'b0),
+	.q(prog_3a_dout)
+	);
+	
+	//Low-pass processor
+	wire [7:0] dout_3a_bus1;
+	wire [7:0] dout_3a_bus2;
+	wire [7:0] dout_3a_bus3;
+	wire [7:0] dout_3a_bus4;
+	wire [7:0] dout_3a_bus5;
+	wire [7:0] dout_3a_bus6;
+	wire [7:0] dout_3a_bus7;
+	wire [7:0] dout_3a_bus8;
+	
+	wire [7:0] din_3a_bus1;
+	wire [7:0] din_3a_bus2;
+	wire [7:0] din_3a_bus3;
+	wire [7:0] din_3a_bus4;
+	wire [7:0] din_3a_bus5;
+	wire [7:0] din_3a_bus6;
+	wire [7:0] din_3a_bus7;
+	wire [7:0] din_3a_bus8;
+	
+	wire [31:0] dout_3a = {dout_3a_bus4, dout_3a_bus3, dout_3a_bus2, dout_3a_bus1};
+	
+	reg [7:0] dout_3a_op1;
+	always @(posedge dout_3a_bus5[4])
+		dout_3a_op1 <= dout_3a_bus1;
+	
+	reg [31:0] dout_3a_op2;
+	always @(posedge dout_3a_bus5[3])
+		dout_3a_op2 <= dout_3a;
+		
+	reg [31:0] dout_3a_op3;
+	always @(posedge dout_3a_bus5[2])
+		dout_3a_op3 <= dout_3a;
+		
+		
+		/*
+	wire [7:0] test_3a_op1 = 192;
+	wire [31:0] test_3a_op2 = 40'h03419200;
+	wire [31:0] test_3a_op3 = 40'h61a00000;
+	wire [31:0] test_3a = 40'h57800000;
+	
+	wire [32:0] test_combo_tmp_0 = test_3a_op2 - test_3a_op3 + test_3a - 40'h80000000;
+	wire [39:0] test_combo_tmp_1 = {{7{test_combo_tmp_0[32]}}, test_combo_tmp_0};
+ 	
+	wire [39:0] test_combo_tmp = test_3a_op1 * test_combo_tmp_1;
+	
+	reg [39:0] test_3a_combo;
+	always @(posedge clk_in)
+		test_3a_combo <= test_combo_tmp[39:8] + 40'h80000000;
+		*/
+		
+	wire [32:0] dout_3a_combo_tmp_0 = dout_3a_op2 - dout_3a_op3 + dout_3a - 33'h80000000;
+	wire [39:0] dout_3a_combo_tmp_1 = {{7{dout_3a_combo_tmp_0[32]}}, dout_3a_combo_tmp_0};
+		
+	wire [39:0] dout_3a_combo_tmp = dout_3a_op1 * dout_3a_combo_tmp_1;
+	
+	reg [31:0] dout_3a_combo;
+	always @(posedge dout_3a_bus5[1])
+		dout_3a_combo <= dout_3a_combo_tmp[39:8] + 32'h80000000;
+
+		
+	reg [31:0] dout_3a_out;
+	always @(posedge dout_3a_bus5[0])
+		dout_3a_out <= dout_3a;
+	
+	assign din_3a_bus1 = (!dout_3a_bus6[0]) ? low_passed[7:0] : dout_3a_combo[7:0];
+	assign din_3a_bus2 = (!dout_3a_bus6[0]) ? low_passed[15:8] : dout_3a_combo[15:8];
+	assign din_3a_bus3 = (!dout_3a_bus6[0]) ? low_passed[23:16] : dout_3a_combo[23:16];
+	assign din_3a_bus4 = (!dout_3a_bus6[0]) ? low_passed[31:24] : dout_3a_combo[31:24];
+	assign din_3a_bus5 = highpass_cutoff;
+	assign din_3a_bus6 = highpass_cutoff;
+	assign din_3a_bus7 = 8'b0;
+	assign din_3a_bus8 = 8'b0;
+	
+	archae_processor Processor_3a_inst(
+	.clk(clk_in),//&!key[2]),
+	.cpu_num(3'd2),
+	
+	.prog_addr(prog_3a_addr),
+	.prog_clk(prog_3a_clk),
+	.prog_dout(prog_3a_dout),
+	
+	.mem_addr(mem_1ab_addr_b),
+	.mem_addrstall(mem_1ab_addrstall_b),
+	.mem_clk(mem_1ab_clk_b),
+	.mem_clk_en(mem_1ab_enable_b),
+	.mem_din(mem_1ab_din_b),
+	.mem_wren(mem_1ab_wren_b),
+	.mem_dout(mem_1ab_dout_b),
+	
+	.dout_bus1(dout_3a_bus1),
+	.dout_bus2(dout_3a_bus2),
+	.dout_bus3(dout_3a_bus3),
+	.dout_bus4(dout_3a_bus4),
+	.dout_bus5(dout_3a_bus5),
+	.dout_bus6(dout_3a_bus6),
+	.dout_bus7(dout_3a_bus7),
+	.dout_bus8(dout_3a_bus8),
+	
+	.din_bus1(din_3a_bus1),
+	.din_bus2(din_3a_bus2),
+	.din_bus3(din_3a_bus3),
+	.din_bus4(din_3a_bus4),
+	.din_bus5(din_3a_bus5),
+	.din_bus6(din_3a_bus6),
+	.din_bus7(din_3a_bus7),
+	.din_bus8(din_3a_bus8)
+	);
+	
+	wire [31:0] high_passed = dout_3a_out;
+	
+	
+	
+	
+	
+	
+	/*
+	reg [31:0] reg_noise = 32'd30;
+	always @(posedge clk_slow) begin
+		reg_noise <= reg_noise*3 + 32'd19;
+	end
+	wire [31:0] noise = keypressed ? reg_noise : 32'b0;
+	
+	
+	
+	
+	wire [7:0] vol_osc1 = io1; //8'b00111111;
+	wire [7:0] vol_osc2 = io2; //8'b00111111;
+	wire [7:0] vol_osc3 = io3; //8'b00111111;
+	wire [7:0] vol_osc4 = io4; //8'b00111111;
+	wire [7:0] vol_noise = io1; //8'b0;
+	
+	wire osc_ovf;
+	wire [31:0] mixed;
+	mixer Mixer_inst(
+	.clk(clk_slow),
+	.osc1(osc1),
+	.osc2(osc2),
+	.osc3(osc3),
+	.osc4(osc4),
+	.noise(noise),
+	.vol_osc1(vol_osc1),
+	.vol_osc2(vol_osc2),
+	.vol_osc3(vol_osc3),
+	.vol_osc4(vol_osc4),
+	.vol_noise(vol_noise),
+	.ovf(ovf),
+	.mixed(mixed)
+	);
+	*/
+	/*
+	wire [7:0] lowpass_cutoff = 8'hff;// + LFO_out;
+	wire [31:0] lowpass_out;
+	lowpass Lowpass_inst(
+	.clk(clk_slow),
+	.cutoff(lowpass_cutoff),
+	.in(mixed),
+	.out(lowpass_out)
+	);
+	*/
+	
+	/*
+	wire [7:0] highpass_cutoff = 8'h80;
+	wire [31:0] highpass_out;
+	highpass Highpass_inst(
+	.clk(clk_sync),
+	.cutoff(highpass_cutoff),
+	.in(passed),
+	.out(highpass_out)
+	);
+	
+	*/
+	wire [31:0] total = mixed;
+	//wire [31:0] total = low_passed;
+	
+	
+	wire [7:0] LFO1_amount = 8'hff;//8'h04;
+	wire [7:0] LFO1_phase = 8'h0;
+	wire [7:0] LFO1_step = debug2;
+	wire [7:0] LFO1_mode = 2'd3;
+	LFO LFO1_inst(
+	.clk(clk_buf[13]),
+	.rst(!keypressed),
+	.amount(LFO1_amount),
+	.phase(LFO1_phase),
+	.step(LFO1_step),
+	.mode(LFO1_mode),
+	.out(LFO1_out)
+	);
+	
+	
+	wire [7:0] LFO2_amount = 8'h04;
+	wire [7:0] LFO2_phase = 8'h0;
+	wire [7:0] LFO2_step = 8'h20;
+	wire [7:0] LFO2_mode = 2'd3;
+	LFO LFO2_inst(
+	.clk(clk_buf[13]),
+	.rst(!keypressed),
+	.amount(LFO2_amount),
+	.phase(LFO2_phase),
+	.step(LFO2_step),
+	.mode(LFO2_mode),
+	.out(LFO2_out)
+	);
+	
+	wire [7:0] envelope1_A = 8'hf0;
+	wire [7:0] envelope1_D = 8'h20;
+	wire [7:0] envelope1_S = 8'h01;
+	wire [7:0] envelope1_R = 8'hff;
+	envelope Envelope1_inst(
+	.clk(clk_buf[9]),
+	.keypressed(keypressed),
+	.A(envelope1_A),
+	.D(envelope1_D),
+	.S(envelope1_S),
+	.R(envelope1_R),
+	.out(envelope1_out)
+	);
+	
+	wire [7:0] envelope2_A = 8'h1;
+	wire [7:0] envelope2_D = 8'h20;
+	wire [7:0] envelope2_S = 8'h01;
+	wire [7:0] envelope2_R = 8'hff;
+	envelope Envelope2_inst(
+	.clk(clk_buf[9]),
+	.keypressed(keypressed),
+	.A(envelope2_A),
+	.D(envelope2_D),
+	.S(envelope2_S),
+	.R(envelope2_R),
+	.out(envelope2_out)
+	);
+	
+	
+	//Output program
+	wire [8:0] prog_oa_addr;
+	wire prog_oa_clk;
+	wire [15:0] prog_oa_dout;
+	prog_o Prog_oa_inst(
+	.address(prog_oa_addr),
+	.addressstall_a(1'b0),
+	.clock(prog_oa_clk),
+	.data(16'b0),
+	.wren(1'b0),
+	.q(prog_oa_dout)
+	);
+	
+	//Output processor
+	wire [7:0] dout_oa_bus1;
+	wire [7:0] dout_oa_bus2;
+	wire [7:0] dout_oa_bus3;
+	wire [7:0] dout_oa_bus4;
+	wire [7:0] dout_oa_bus5;
+	wire [7:0] dout_oa_bus6;
+	wire [7:0] dout_oa_bus7;
+	wire [7:0] dout_oa_bus8;
+	
+	wire [7:0] din_oa_bus1;
+	wire [7:0] din_oa_bus2;
+	wire [7:0] din_oa_bus3;
+	wire [7:0] din_oa_bus4;
+	wire [7:0] din_oa_bus5;
+	wire [7:0] din_oa_bus6;
+	wire [7:0] din_oa_bus7;
+	wire [7:0] din_oa_bus8;
+	
+	assign din_oa_bus1 = 8'h00;
+	assign din_oa_bus2 = 8'h00;
+	assign din_oa_bus3 = 8'h00;
+	assign din_oa_bus4 = 8'h00;
+	assign din_oa_bus5 = 8'h00;
+	assign din_oa_bus6 = 8'h00;
+	assign din_oa_bus7 = 8'h00;
+	assign din_oa_bus8 = 8'h00;
+	
+	archae_processor Processor_oa_inst(
+	.clk(clk_in),
+	.cpu_num(3'b0),
+	
+	.prog_addr(prog_oa_addr),
+	.prog_clk(prog_oa_clk),
+	.prog_dout(prog_oa_dout),
+	
+	.mem_addr(mem_2ab_addr_b),
+	.mem_addrstall(mem_2ab_addrstall_b),
+	.mem_clk(mem_2ab_clk_b),
+	.mem_clk_en(mem_2ab_enable_b),
+	.mem_din(mem_2ab_din_b),
+	.mem_wren(mem_2ab_wren_b),
+	.mem_dout(mem_2ab_dout_b),
+	
+	.dout_bus1(dout_oa_bus1),
+	.dout_bus2(dout_oa_bus2),
+	.dout_bus3(dout_oa_bus3),
+	.dout_bus4(dout_oa_bus4),
+	.dout_bus5(dout_oa_bus5),
+	.dout_bus6(dout_oa_bus6),
+	.dout_bus7(dout_oa_bus7),
+	.dout_bus8(dout_oa_bus8),
+	
+	.din_bus1(din_oa_bus1),
+	.din_bus2(din_oa_bus2),
+	.din_bus3(din_oa_bus3),
+	.din_bus4(din_oa_bus4),
+	.din_bus5(din_oa_bus5),
+	.din_bus6(din_oa_bus6),
+	.din_bus7(din_oa_bus7),
+	.din_bus8(din_oa_bus8)
+	);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	wire testing = clk_buf[1];
+	
+	
+	assign buzzer = 1;
+	
+	
+	wire [7:0] pwm_in;
+	assign pwm_in = total[31:24];
+	reg [7:0] reg_pwm;
+	reg out;
+	always @(posedge clk_in) begin
+		reg_pwm <= reg_pwm + 1'b1;
+		if(reg_pwm > pwm_in)
+			out <= 1'b0;
+		else
+			out <= 1'b1;
+	end
+	assign pwm_sound = out;
+
+	
+	wire [7:0]tmpdebugdebug = {debug2[6:0], 1'b0};
+	wire [7:0]debugdebug = total[31:8] - 8'h80;
+	wire [23:0] output_left = total[31:8];
+	wire [23:0] output_right = total[31:8];
+	
+	assign dac_lrck = clk_buf[9];
+	assign dac_mclk = clk_buf[1];
+	assign dac_sclk = !clk_buf[1];
+	
+	reg reg_dac_lrck;
+	reg [24:0] reg_output;
+	always @(posedge testing) begin
+		reg_dac_lrck <= dac_lrck;
+		case({dac_lrck, reg_dac_lrck})
+			0: reg_output <= {reg_output[23:0], 1'b0};
+			1: reg_output <= {1'b0, output_left};
+			2: reg_output <= {1'b0, output_right};
+			3: reg_output <= {reg_output[23:0], 1'b0};
+		endcase
+	end
+		
+	assign dac_sdata = reg_output[24];		
+	
+	wire [7:0] test_3a_op1 = 192;
+	wire [31:0] test_3a_op2 = 40'h03419200;
+	wire [31:0] test_3a_op3 = 40'h61a00000;
+	wire [31:0] test_3a = 40'h57800000;
+	
+	wire [32:0] test_combo_tmp_0 = test_3a_op2 - test_3a_op3 + test_3a - 33'h80000000;
+	wire [39:0] test_combo_tmp_1 = {{7{test_combo_tmp_0[32]}}, test_combo_tmp_0};
+ 	
+	wire [39:0] test_combo_tmp = test_3a_op1 * test_combo_tmp_1;
+	
+	reg [31:0] test_3a_combo;
+	always @(posedge clk_in)
+		test_3a_combo <= test_combo_tmp[39:8] + 32'h80000000;
+	
+	seven_seg Seven_Seg(
+	.clk(clk_in),
+	
+	
+	//.digit0(sclk),
+	//.digit1(lrck),
+	.digit2(debugdebug[3:0]),
+	.digit3(debugdebug[7:4]),
+	.digit4(debug1[3:0]),
+	.digit5(debug1[7:4]),
+
+	
+	.dig(dig),
+	.sel(sel)
+	);
+	
+	
+	
+endmodule

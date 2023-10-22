@@ -1,0 +1,11 @@
+module driver(
+	input clk,
+	
+	output sdata,
+	output sclk,
+	output lrck,
+	output mclk
+	);
+	
+	
+	
